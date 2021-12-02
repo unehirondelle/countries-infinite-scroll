@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {createServer} from 'miragejs';
-import {View, Text, SafeAreaView, FlatList, StatusBar, StyleSheet, ActivityIndicator} from 'react-native';
+import {View, Text, SafeAreaView, FlatList, StatusBar, StyleSheet, ActivityIndicator, Dimensions} from 'react-native';
 import countriesData from '../data/countries';
 
 if (window.server) {
@@ -16,12 +16,15 @@ window.server = createServer({
     }
 });
 
+const {width, height} = Dimensions.get('window');
+
 const CountriesList = () => {
     const [countries, setCountries] = useState([]);
     const [offsetNumber, setOffsetNumber] = useState(0);
     const [isPageLoading, setIsPageLoading] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [hasScrolled, setHasScrolled] = useState(false);
 
     const fetchData = () => {
         console.log(`offsetNumber: ${offsetNumber}, countries: ${countries}`);
@@ -63,10 +66,20 @@ const CountriesList = () => {
         return <ListItem name={item.name}/>
     };
 
-    const handleEndReached = () => {
+    const handleEndReached = ({distanceFromEnd}) => {
         if (countries.length < 40) {
+            console.log('onEndReached', distanceFromEnd)
+            if (distanceFromEnd <= 0 && !hasScrolled) {
+                console.log('didnt reach to the end of the list')
+                return;
+            }
+            if (isPageLoading) {
+                console.log('already loading')
+                return;
+            }
             setOffsetNumber(current => current + 20);
             setIsLoading(true);
+            console.log('end reached');
         }
     };
 
@@ -74,6 +87,8 @@ const CountriesList = () => {
         if (countries.length < 40) {
             setOffsetNumber(0);
             setIsRefreshing(true);
+        } else {
+            setHasScrolled(false);
         }
     };
 
@@ -90,7 +105,6 @@ const CountriesList = () => {
                     borderTopWidth: 1,
                     marginTop: 10,
                     marginBottom: 10,
-
                 }}
             >
                 <ActivityIndicator animating size="large"/>
@@ -107,14 +121,28 @@ const CountriesList = () => {
                     height: '100%',
                     width: '100%'
                 }} data={countries} renderItem={renderItem} keyExtractor={item => item.name}
+                          onScroll={(e) => {
+                              console.log('SCROLL', e);
+                              setHasScrolled(true)
+                          }}
                           onEndReached={handleEndReached}
-                          onEndReachedThreshold={10}
+                          onEndReachedThreshold={0.5}
                           onRefresh={handleRefresh}
-                          refreshing={isRefreshing}
+                          // refreshing={isRefreshing}
+                          refreshing={isPageLoading}
                           ListFooterComponent={renderFooter}
-                          initialNumToRender={20}/>
+                          initialNumToRender={20}
+                          onMomentumScrollBegin={(e) => {
+                              console.log('onMomentumScrollBegin', e);
+                              setIsPageLoading(true);
+                          }}
+                          onMomentumScrollEnd={() => {
+                              console.log('onMomentumScrollEnd');
+                          }}
+
+                />
                 : <View>
-                    <Text style={{alignSelf: 'center'}}>Loading beers</Text>
+                    <Text style={{alignSelf: 'center'}}>Loading data</Text>
                     <ActivityIndicator/>
                 </View>
             }
