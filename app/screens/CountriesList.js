@@ -24,24 +24,32 @@ const CountriesList = () => {
     const [isRefreshing, setIsRefreshing] = useState(false);
 
     const fetchData = () => {
-        fetch(`/api/countries?offset=${offsetNumber}&limit=20`)
-            .then(res => res.json())
-            .then(json => {
-                if (json.length) {
-                    setCountries(current => current.concat(json));
+        console.log(`offsetNumber: ${offsetNumber}, countries: ${countries}`);
+        if (countries.length < 40) {
+            fetch(`/api/countries?offset=${offsetNumber}&limit=20`)
+                .then(res => res.json())
+                .then(json => {
+                    if (json.length) {
+                        offsetNumber === 0 ?
+                            setCountries(json)
+                            : setCountries([...countries, ...json]);
+                        setIsPageLoading(false);
+                        setIsLoading(false);
+                        setIsRefreshing(false);
+                    } else {
+                        window.alert('No more countries');
+                    }
+                })
+                .catch(err => {
                     setIsPageLoading(false);
-                    setIsLoading(false);
-                    setIsRefreshing(false);
-                } else {
-                    window.alert('No more countries');
-                }
-            })
-            .catch(err => console.log(`/api/countries error ${err}`));
+                    console.log(`/api/countries error ${err}`)
+                });
+        }
     };
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [isRefreshing, isLoading]);
 
     const ListItem = ({name}) => (
         <View style={styles.item}>
@@ -56,21 +64,18 @@ const CountriesList = () => {
     };
 
     const handleEndReached = () => {
-        setIsLoading(true);
-        setOffsetNumber(offsetNumber + 20);
+        if (countries.length < 40) {
+            setOffsetNumber(current => current + 20);
+            setIsLoading(true);
+        }
     };
 
     const handleRefresh = () => {
-        setIsRefreshing(true);
-        fetchData();
-    };
-    /*const onEndReachedHandler = ({distanceFromEnd}) => {
-        if (!isLoading) {
-            setOffsetNumber(offsetNumber + 20)
-            setIsLoading(true)
+        if (countries.length < 40) {
+            setOffsetNumber(0);
+            setIsRefreshing(true);
         }
     };
-*/
 
     const renderFooter = () => {
         if (!isLoading) return null;
@@ -96,12 +101,18 @@ const CountriesList = () => {
     return (
         <SafeAreaView style={styles.container}>
             {!isPageLoading ?
-                <FlatList data={countries} renderItem={renderItem} keyExtractor={item => item.name}
+                <FlatList contentContainerStyle={{
+                    flex: 1,
+                    flexDirection: 'column',
+                    height: '100%',
+                    width: '100%'
+                }} data={countries} renderItem={renderItem} keyExtractor={item => item.name}
                           onEndReached={handleEndReached}
-                          onEndReachedThreshold={0.5}
+                          onEndReachedThreshold={10}
                           onRefresh={handleRefresh}
                           refreshing={isRefreshing}
-                          ListFooterComponent={renderFooter}/>
+                          ListFooterComponent={renderFooter}
+                          initialNumToRender={20}/>
                 : <View>
                     <Text style={{alignSelf: 'center'}}>Loading beers</Text>
                     <ActivityIndicator/>

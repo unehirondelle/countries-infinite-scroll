@@ -40,7 +40,7 @@ const countries = [
     {name: 'Canada', code: 'CA'},
     {name: 'Cape Verde', code: 'CV'},
     {name: 'Cayman Islands', code: 'KY'},
-    {name: 'Central African Republic', code: 'CF'},
+    /*{name: 'Central African Republic', code: 'CF'},
     {name: 'Chad', code: 'TD'},
     {name: 'Chile', code: 'CL'},
     {name: 'China', code: 'CN'},
@@ -241,7 +241,7 @@ const countries = [
     {name: 'Western Sahara', code: 'EH'},
     {name: 'Yemen', code: 'YE'},
     {name: 'Zambia', code: 'ZM'},
-    {name: 'Zimbabwe', code: 'ZW'}
+    {name: 'Zimbabwe', code: 'ZW'}*/
 ];
 
 export default countries;
